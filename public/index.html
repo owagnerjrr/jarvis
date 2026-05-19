@@ -25,8 +25,16 @@
         <aside class="memory-panel" aria-label="Memorias permanentes">
           <div class="panel-head">
             <h2>Memoria</h2>
-            <button class="icon-button" id="refreshMemory" title="Atualizar memoria" aria-label="Atualizar memoria">↻</button>
+            <button class="icon-button" id="refreshMemory" title="Atualizar memoria" aria-label="Atualizar memoria">R</button>
           </div>
+          <label class="mode-field" for="modeSelect">
+            <span>Modo</span>
+            <select id="modeSelect">
+              <option value="auto">Auto</option>
+              <option value="local">Local privado</option>
+              <option value="programmer">Programador forte</option>
+            </select>
+          </label>
           <form id="memoryForm" class="memory-form">
             <input id="memoryInput" autocomplete="off" placeholder="Ex.: meu notebook e Windows">
             <button type="submit">Salvar</button>

@@ -9,10 +9,15 @@ const publicDir = path.join(__dirname, "public");
 const dataDir = path.join(__dirname, "data");
 const memoryFile = path.join(dataDir, "jarvis-memory.json");
 
+await loadEnvFile();
+
 const port = Number(process.env.PORT || 5173);
 const host = process.env.HOST || "0.0.0.0";
 const ollamaUrl = process.env.OLLAMA_URL || "http://127.0.0.1:11434";
 const model = process.env.JARVIS_MODEL || "llama3.1:8b";
+const openaiApiKey = process.env.OPENAI_API_KEY || "";
+const openaiModel = process.env.OPENAI_MODEL || "gpt-5.5";
+const openaiReasoning = process.env.OPENAI_REASONING || "high";
 
 const mimeTypes = new Map([
   [".html", "text/html; charset=utf-8"],
@@ -23,6 +28,23 @@ const mimeTypes = new Map([
   [".png", "image/png"],
   [".ico", "image/x-icon"]
 ]);
+
+async function loadEnvFile() {
+  try {
+    const envPath = path.join(__dirname, ".env");
+    const contents = await readFile(envPath, "utf8");
+    for (const line of contents.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue;
+      const index = trimmed.indexOf("=");
+      const key = trimmed.slice(0, index).trim();
+      const value = trimmed.slice(index + 1).trim().replace(/^["']|["']$/g, "");
+      if (key && process.env[key] === undefined) process.env[key] = value;
+    }
+  } catch {
+    // .env is optional. Jarvis can run local-only without it.
+  }
+}
 
 async function ensureMemory() {
   await mkdir(dataDir, { recursive: true });
@@ -72,10 +94,18 @@ function buildSystemPrompt(memory) {
     "Voce e Jarvis, uma IA particular, discreta, util e direta.",
     "Responda em portugues do Brasil, a menos que o usuario peca outro idioma.",
     "Priorize privacidade: nao sugira servicos em nuvem quando uma alternativa local for razoavel.",
+    "Quando estiver em modo programador, aja como um engenheiro senior: leia o problema, proponha passos claros, escreva codigo completo quando fizer sentido, explique tradeoffs e destaque riscos de seguranca.",
+    "Nao invente APIs, arquivos ou resultados de testes. Se algo depender do ambiente do usuario, diga isso claramente.",
     "Se faltar informacao, faca uma pergunta curta ou assuma de forma conservadora.",
     "Memorias permanentes do usuario:",
     notes
   ].join("\n");
+}
+
+function buildTranscript(messages) {
+  return messages
+    .map((message) => `${message.role === "assistant" ? "Jarvis" : "Usuario"}: ${message.content}`)
+    .join("\n\n");
 }
 
 async function askOllama(messages, memory) {
@@ -104,6 +134,68 @@ async function askOllama(messages, memory) {
   return payload.message?.content || "Nao recebi resposta do modelo local.";
 }
 
+async function askOpenAI(messages, memory) {
+  if (!openaiApiKey) {
+    throw new Error("OPENAI_API_KEY nao configurada. Crie um arquivo .env para usar o modo programador forte.");
+  }
+
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "authorization": `Bearer ${openaiApiKey}`,
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      model: openaiModel,
+      instructions: buildSystemPrompt(memory),
+      input: buildTranscript(messages),
+      reasoning: { effort: openaiReasoning },
+      max_output_tokens: 6000
+    })
+  });
+
+  if (!response.ok) {
+    const details = await response.text();
+    throw new Error(`OpenAI respondeu ${response.status}: ${details}`);
+  }
+
+  const payload = await response.json();
+  if (payload.output_text) return payload.output_text;
+
+  const text = (payload.output || [])
+    .flatMap((item) => item.content || [])
+    .filter((item) => item.type === "output_text" || item.text)
+    .map((item) => item.text)
+    .join("\n")
+    .trim();
+
+  return text || "Nao recebi resposta do modelo OpenAI.";
+}
+
+async function askJarvis(mode, messages, memory) {
+  if (mode === "programmer") {
+    return {
+      provider: "openai",
+      model: openaiModel,
+      answer: await askOpenAI(messages, memory)
+    };
+  }
+
+  if (mode === "auto" && openaiApiKey) {
+    return {
+      provider: "openai",
+      model: openaiModel,
+      answer: await askOpenAI(messages, memory)
+    };
+  }
+
+  return {
+    provider: "ollama",
+    model,
+    answer: await askOllama(messages, memory)
+  };
+}
+
 async function handleApi(request, response, pathname) {
   if (pathname === "/api/status") {
     try {
@@ -113,6 +205,9 @@ async function handleApi(request, response, pathname) {
         ok: true,
         ollama: ollama.ok,
         model,
+        openai: Boolean(openaiApiKey),
+        openaiModel,
+        openaiReasoning,
         availableModels: (tags.models || []).map((item) => item.name)
       });
     } catch (error) {
@@ -120,6 +215,9 @@ async function handleApi(request, response, pathname) {
         ok: true,
         ollama: false,
         model,
+        openai: Boolean(openaiApiKey),
+        openaiModel,
+        openaiReasoning,
         availableModels: [],
         message: error.message
       });
@@ -150,6 +248,7 @@ async function handleApi(request, response, pathname) {
   if (pathname === "/api/chat" && request.method === "POST") {
     const body = await readBody(request);
     const text = String(body.message || "").trim();
+    const mode = ["local", "programmer", "auto"].includes(body.mode) ? body.mode : "local";
     if (!text) {
       sendJson(response, 400, { error: "Mensagem vazia." });
       return;
@@ -160,17 +259,20 @@ async function handleApi(request, response, pathname) {
       { role: "user", content: turn.user },
       { role: "assistant", content: turn.assistant }
     ]);
-    const answer = await askOllama([...recent, { role: "user", content: text }], memory);
+    const result = await askJarvis(mode, [...recent, { role: "user", content: text }], memory);
 
     memory.conversations.push({
       at: new Date().toISOString(),
+      mode,
+      provider: result.provider,
+      model: result.model,
       user: text,
-      assistant: answer
+      assistant: result.answer
     });
     memory.conversations = memory.conversations.slice(-80);
     await saveMemory(memory);
 
-    sendJson(response, 200, { answer });
+    sendJson(response, 200, result);
     return;
   }
 
@@ -216,4 +318,5 @@ const server = http.createServer(async (request, response) => {
 server.listen(port, host, () => {
   console.log(`Jarvis rodando em http://127.0.0.1:${port}`);
   console.log(`Modelo local: ${model}`);
+  console.log(`Modo programador: ${openaiApiKey ? openaiModel : "OPENAI_API_KEY nao configurada"}`);
 });

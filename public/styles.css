@@ -25,6 +25,7 @@ body {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -139,6 +140,28 @@ h2 {
 .memory-form {
   display: grid;
   gap: 8px;
+}
+
+.mode-field {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.mode-field select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #0d1114;
+  outline: none;
+}
+
+.mode-field select:focus {
+  border-color: var(--accent);
 }
 
 .memory-form input,

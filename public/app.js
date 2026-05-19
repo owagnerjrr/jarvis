@@ -7,8 +7,9 @@ const memoryForm = document.querySelector("#memoryForm");
 const memoryInput = document.querySelector("#memoryInput");
 const memoryList = document.querySelector("#memoryList");
 const refreshMemory = document.querySelector("#refreshMemory");
+const modeSelect = document.querySelector("#modeSelect");
 
-const welcome = "Ola. Eu sou o Jarvis. Quando o Ollama estiver rodando neste computador, eu respondo usando um modelo local.";
+const welcome = "Ola. Eu sou o Jarvis. Posso usar o modo local privado ou o modo programador forte quando a chave OpenAI estiver configurada.";
 
 function addMessage(role, text) {
   const item = document.createElement("div");
@@ -30,11 +31,18 @@ async function api(path, options = {}) {
 
 async function refreshStatus() {
   const status = await api("/api/status");
-  statusEl.classList.toggle("online", status.ollama);
-  statusEl.classList.toggle("offline", !status.ollama);
+  const ready = status.ollama || status.openai;
+  statusEl.classList.toggle("online", ready);
+  statusEl.classList.toggle("offline", !ready);
+
+  if (status.openai) {
+    statusEl.querySelector("span:last-child").textContent = `programador: ${status.openaiModel}`;
+    return;
+  }
+
   statusEl.querySelector("span:last-child").textContent = status.ollama
-    ? `online: ${status.model}`
-    : "Ollama offline";
+    ? `local: ${status.model}`
+    : "sem modelo ativo";
 }
 
 async function loadMemory() {
@@ -67,9 +75,9 @@ chatForm.addEventListener("submit", async (event) => {
   try {
     const response = await api("/api/chat", {
       method: "POST",
-      body: JSON.stringify({ message })
+      body: JSON.stringify({ message, mode: modeSelect.value })
     });
-    addMessage("assistant", response.answer);
+    addMessage("assistant", `[${response.provider} / ${response.model}]\n${response.answer}`);
   } catch (error) {
     addMessage("error", error.message);
   } finally {

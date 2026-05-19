@@ -6,8 +6,9 @@ Jarvis e uma IA particular para rodar no seu computador e abrir tambem no celula
 
 - Interface web instalavel no celular.
 - Chat privado usando um modelo local via Ollama.
+- Modo hibrido com OpenAI API para programacao forte.
 - Memorias permanentes salvas em `data/jarvis-memory.json`.
-- Nenhuma chave de API ou nuvem por padrao.
+- Nenhuma chave de API ou nuvem por padrao; o modo OpenAI so liga se voce configurar `.env`.
 
 ## Instalar o modelo local
 
@@ -54,6 +55,31 @@ Abra:
 http://127.0.0.1:5185
 ```
 
+## Ativar o modo programador forte
+
+1. Copie `.env.example` para `.env`.
+2. Coloque sua chave da OpenAI em `OPENAI_API_KEY`.
+3. Mantenha o modelo forte padrao:
+
+```text
+OPENAI_MODEL=gpt-5.5
+OPENAI_REASONING=high
+```
+
+4. Rode o Jarvis de novo:
+
+```powershell
+npm start
+```
+
+Na tela, escolha:
+
+- `Local privado`: usa Ollama no seu computador.
+- `Programador forte`: usa OpenAI API.
+- `Auto`: usa OpenAI se a chave existir; senao usa Ollama.
+
+O arquivo `.env` fica fora do Git por seguranca.
+
 ## Abrir no celular
 
 1. Deixe o computador e o celular na mesma rede Wi-Fi.
@@ -79,6 +105,6 @@ No Android ou iPhone, use a opcao do navegador para adicionar a tela inicial.
 
 ## Privacidade
 
-O chat chama apenas o Ollama em `http://127.0.0.1:11434`. O historico e as memorias ficam na pasta local `data/`.
+No modo local, o chat chama apenas o Ollama em `http://127.0.0.1:11434`. No modo programador forte, a pergunta e o contexto recente sao enviados para a OpenAI API. O historico e as memorias ficam na pasta local `data/`.
 
 Se voce abrir o Jarvis fora da sua rede local, proteja o acesso antes. Esta primeira versao foi feita para uso domestico/local.
