@@ -7,6 +7,7 @@ Jarvis e uma IA particular para rodar no seu computador e abrir tambem no celula
 - Interface web instalavel no celular.
 - Chat privado usando um modelo local via Ollama.
 - Modo hibrido com OpenAI API para programacao forte.
+- Conversa por voz no navegador, com microfone e resposta falada em portugues.
 - Memorias permanentes salvas em `data/jarvis-memory.json`.
 - Nenhuma chave de API ou nuvem por padrao; o modo OpenAI so liga se voce configurar `.env`.
 
@@ -79,6 +80,18 @@ Na tela, escolha:
 - `Auto`: usa OpenAI se a chave existir; senao usa Ollama.
 
 O arquivo `.env` fica fora do Git por seguranca.
+
+## Conversar por voz
+
+Na interface do Jarvis:
+
+- Clique em `Falar` para ditar uma pergunta em portugues.
+- Deixe `Responder em voz` ligado para ouvir a resposta.
+- Escolha uma voz em `Voz`, quando o navegador oferecer opcoes em portugues.
+
+O reconhecimento de voz usa os recursos do navegador. Em alguns celulares ou navegadores, pode ser necessario permitir o microfone ou usar Chrome/Edge.
+
+A voz e configurada para soar como um assistente calmo, elegante e tecnologico em portugues do Brasil. Ela nao copia a voz original do Jarvis dos filmes, porque essa voz e uma identidade especifica, mas o tom pode ficar na mesma direcao de assistente premium.
 
 ## Abrir no celular
 

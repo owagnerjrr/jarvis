@@ -35,6 +35,21 @@
               <option value="programmer">Programador forte</option>
             </select>
           </label>
+          <div class="voice-panel" aria-label="Controles de voz">
+            <div class="voice-actions">
+              <button class="secondary-button" id="voiceButton" type="button">Falar</button>
+              <label class="voice-toggle">
+                <input id="speakToggle" type="checkbox" checked>
+                <span>Responder em voz</span>
+              </label>
+            </div>
+            <label class="mode-field" for="voiceSelect">
+              <span>Voz</span>
+              <select id="voiceSelect">
+                <option value="">Automatica pt-BR</option>
+              </select>
+            </label>
+          </div>
           <form id="memoryForm" class="memory-form">
             <input id="memoryInput" autocomplete="off" placeholder="Ex.: meu notebook e Windows">
             <button type="submit">Salvar</button>
