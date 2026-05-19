@@ -302,7 +302,7 @@ function serveStatic(response, pathname) {
     .pipe(response);
 }
 
-const server = http.createServer(async (request, response) => {
+export const server = http.createServer(async (request, response) => {
   try {
     const url = new URL(request.url, `http://${request.headers.host}`);
     if (url.pathname.startsWith("/api/")) {
@@ -315,8 +315,25 @@ const server = http.createServer(async (request, response) => {
   }
 });
 
-server.listen(port, host, () => {
-  console.log(`Jarvis rodando em http://127.0.0.1:${port}`);
-  console.log(`Modelo local: ${model}`);
-  console.log(`Modo programador: ${openaiApiKey ? openaiModel : "OPENAI_API_KEY nao configurada"}`);
-});
+export function startServer(options = {}) {
+  const selectedPort = Number(options.port || port);
+  const selectedHost = options.host || host;
+
+  return new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(selectedPort, selectedHost, () => {
+      server.off("error", reject);
+      console.log(`Jarvis rodando em http://127.0.0.1:${selectedPort}`);
+      console.log(`Modelo local: ${model}`);
+      console.log(`Modo programador: ${openaiApiKey ? openaiModel : "OPENAI_API_KEY nao configurada"}`);
+      resolve({ port: selectedPort, host: selectedHost });
+    });
+  });
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  startServer().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

@@ -56,6 +56,40 @@ Abra:
 http://127.0.0.1:5185
 ```
 
+## Rodar como aplicativo desktop
+
+Para abrir o Jarvis em uma janela propria:
+
+```powershell
+npm run desktop
+```
+
+## Gerar o .exe
+
+Depois de instalar as dependencias com `npm install`, rode:
+
+```powershell
+npm run dist
+```
+
+O executavel fica em:
+
+```text
+dist/win-unpacked/Jarvis.exe
+```
+
+Esse `.exe` deve ficar junto da pasta `win-unpacked`, porque ela contem os arquivos internos do Electron.
+
+Esse build local nao e assinado digitalmente, entao o Windows pode mostrar um aviso do SmartScreen na primeira abertura.
+
+Para tentar gerar instalador NSIS e versao portable:
+
+```powershell
+npm run dist:installer
+```
+
+No Windows, essa etapa pode exigir permissoes para criar links simbolicos. Se falhar, use o `dist/win-unpacked/Jarvis.exe`.
+
 ## Ativar o modo programador forte
 
 1. Copie `.env.example` para `.env`.
@@ -90,6 +124,8 @@ Na interface do Jarvis:
 - Escolha uma voz em `Voz`, quando o navegador oferecer opcoes em portugues.
 
 O reconhecimento de voz usa os recursos do navegador. Em alguns celulares ou navegadores, pode ser necessario permitir o microfone ou usar Chrome/Edge.
+
+No app desktop Electron, a resposta falada deve funcionar quando houver voz instalada no Windows. Se o botao `Falar` aparecer indisponivel, use a versao no Chrome/Edge para ditado por microfone enquanto adicionamos um motor de voz nativo.
 
 A voz e configurada para soar como um assistente calmo, elegante e tecnologico em portugues do Brasil. Ela nao copia a voz original do Jarvis dos filmes, porque essa voz e uma identidade especifica, mas o tom pode ficar na mesma direcao de assistente premium.
 

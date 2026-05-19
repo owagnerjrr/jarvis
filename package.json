@@ -2,14 +2,50 @@
   "name": "jarvis-local-ai",
   "version": "0.1.0",
   "private": true,
+  "author": "Wagner Junior",
   "description": "Jarvis, a private local AI assistant for desktop and phone.",
   "type": "module",
+  "main": "desktop/main.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "check": "node --check server.js && node --check public/app.js"
+    "desktop": "electron .",
+    "dist": "electron-builder --win dir",
+    "dist:installer": "electron-builder --win nsis portable",
+    "check": "node --check server.js && node --check public/app.js && node --check desktop/main.js"
+  },
+  "build": {
+    "appId": "br.com.owagnerjrr.jarvis",
+    "productName": "Jarvis",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "desktop/**/*",
+      "public/**/*",
+      "server.js",
+      "package.json",
+      ".env.example"
+    ],
+    "extraResources": [
+      {
+        "from": "data/.gitkeep",
+        "to": "data/.gitkeep"
+      }
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    }
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "electron": "^42.2.0",
+    "electron-builder": "^26.8.1"
   }
 }
