@@ -1,0 +1,15 @@
+{
+  "name": "jarvis-local-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Jarvis, a private local AI assistant for desktop and phone.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "check": "node --check server.js && node --check public/app.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

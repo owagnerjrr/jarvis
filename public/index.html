@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101418">
+    <title>Jarvis</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar" aria-label="Estado do Jarvis">
+        <div>
+          <p class="eyebrow">IA particular</p>
+          <h1>Jarvis</h1>
+        </div>
+        <div class="status" id="status">
+          <span class="dot"></span>
+          <span>verificando</span>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <aside class="memory-panel" aria-label="Memorias permanentes">
+          <div class="panel-head">
+            <h2>Memoria</h2>
+            <button class="icon-button" id="refreshMemory" title="Atualizar memoria" aria-label="Atualizar memoria">↻</button>
+          </div>
+          <form id="memoryForm" class="memory-form">
+            <input id="memoryInput" autocomplete="off" placeholder="Ex.: meu notebook e Windows">
+            <button type="submit">Salvar</button>
+          </form>
+          <ul id="memoryList" class="memory-list"></ul>
+        </aside>
+
+        <section class="chat-panel" aria-label="Conversa com Jarvis">
+          <div id="messages" class="messages"></div>
+          <form id="chatForm" class="composer">
+            <textarea id="messageInput" rows="2" placeholder="Fale com o Jarvis..." autofocus></textarea>
+            <button id="sendButton" type="submit">Enviar</button>
+          </form>
+        </section>
+      </section>
+    </main>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
