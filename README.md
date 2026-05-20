@@ -9,6 +9,7 @@ Jarvis e uma IA particular para rodar no seu computador e abrir tambem no celula
 - Modo hibrido com OpenAI API para programacao forte.
 - Conversa por voz no navegador, com microfone e resposta falada em portugues.
 - Memorias permanentes salvas em `data/jarvis-memory.json`.
+- Tela de configuracao, diagnostico e ferramentas de programacao.
 - Nenhuma chave de API ou nuvem por padrao; o modo OpenAI so liga se voce configurar `.env`.
 
 ## Instalar o modelo local
@@ -128,6 +129,73 @@ O reconhecimento de voz usa os recursos do navegador. Em alguns celulares ou nav
 No app desktop Electron, a resposta falada deve funcionar quando houver voz instalada no Windows. Se o botao `Falar` aparecer indisponivel, use a versao no Chrome/Edge para ditado por microfone enquanto adicionamos um motor de voz nativo.
 
 A voz e configurada para soar como um assistente calmo, elegante e tecnologico em portugues do Brasil. Ela nao copia a voz original do Jarvis dos filmes, porque essa voz e uma identidade especifica, mas o tom pode ficar na mesma direcao de assistente premium.
+
+Se `Usar voz neural OpenAI` estiver ligado na tela de configuracao, o Jarvis usa a API de voz da OpenAI para gerar MP3. Essa voz e sintetica e deve ser apresentada como voz gerada por IA.
+
+## Configuracao e ferramentas
+
+Na aba `Config`, defina:
+
+- porta local;
+- URL do Ollama;
+- modelo local;
+- chave/modelo OpenAI;
+- pasta principal de projetos;
+- pastas extras permitidas;
+- modelo e voz de TTS.
+
+Na aba `Projetos`, o Jarvis consegue:
+
+- listar arquivos;
+- ler arquivos;
+- gravar arquivos dentro das pastas permitidas;
+- rodar comandos permitidos: `npm`, `git` e `node`.
+
+Comandos destrutivos nao entram nessa primeira lista. Antes de gravar arquivo ou rodar comando, a interface pede confirmacao.
+
+No app desktop, configuracoes e memoria ficam na pasta segura do usuario do Windows, nao dentro do executavel.
+
+## Diagnostico
+
+Na aba `Diagnostico`, o Jarvis verifica:
+
+- Ollama ligado;
+- OpenAI configurada;
+- voz neural configurada;
+- pastas de projeto acessiveis;
+- pasta de dados local;
+- estado do microfone pela interface.
+
+## APK para celular
+
+O celular deve ficar vinculado ao computador de casa: o app Android abre a interface do Jarvis e conversa com o servidor local do PC pela rede Wi-Fi.
+
+No computador de casa, rode o Jarvis com host liberado na rede:
+
+```powershell
+$env:HOST="0.0.0.0"; npm start
+```
+
+No celular, use o IP do PC, por exemplo:
+
+```text
+http://192.168.0.25:5185
+```
+
+O projeto esta preparado para adicionar Android com Capacitor. Se o Android SDK estiver instalado, use:
+
+```powershell
+npm run android:sync
+npm run android:build
+```
+
+O APK debug esperado fica em:
+
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Se o Gradle falhar baixando dependencias por certificado Java, abra o projeto `android/` no Android Studio uma vez ou ajuste o Java/SDK do Android Studio antes de rodar o build.
 
 ## Abrir no celular
 

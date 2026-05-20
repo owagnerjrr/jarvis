@@ -11,12 +11,28 @@ const modeSelect = document.querySelector("#modeSelect");
 const voiceButton = document.querySelector("#voiceButton");
 const speakToggle = document.querySelector("#speakToggle");
 const voiceSelect = document.querySelector("#voiceSelect");
+const tabButtons = document.querySelectorAll(".tab-button");
+const panels = {
+  chat: messagesEl,
+  settings: document.querySelector("#settingsPanel"),
+  tools: document.querySelector("#toolsPanel"),
+  diagnostics: document.querySelector("#diagnosticsPanel")
+};
+const settingsForm = document.querySelector("#settingsForm");
+const diagnosticsButton = document.querySelector("#diagnosticsButton");
+const diagnosticsOutput = document.querySelector("#diagnosticsOutput");
+const listFilesButton = document.querySelector("#listFilesButton");
+const readFileButton = document.querySelector("#readFileButton");
+const writeFileButton = document.querySelector("#writeFileButton");
+const runCommandButton = document.querySelector("#runCommandButton");
+const toolOutput = document.querySelector("#toolOutput");
 
 const welcome = "Ola. Eu sou o Jarvis. Posso usar o modo local privado ou o modo programador forte quando a chave OpenAI estiver configurada.";
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
 let isListening = false;
 let availableVoices = [];
+let appConfig = {};
 
 function addMessage(role, text) {
   const item = document.createElement("div");
@@ -75,6 +91,32 @@ function speak(text) {
   window.speechSynthesis.speak(utterance);
 }
 
+async function speakWithBestVoice(text) {
+  if (!speakToggle.checked) return;
+
+  const spoken = cleanSpokenText(text).slice(0, 4000);
+  if (!spoken) return;
+
+  if (appConfig.openaiTtsEnabled) {
+    try {
+      const response = await fetch("/api/speech", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: spoken })
+      });
+      if (!response.ok) throw new Error("Voz neural indisponivel.");
+      const blob = await response.blob();
+      const audio = new Audio(URL.createObjectURL(blob));
+      await audio.play();
+      return;
+    } catch (error) {
+      addMessage("error", `${error.message} Usando voz do navegador.`);
+    }
+  }
+
+  speak(spoken);
+}
+
 function loadVoices() {
   if (!("speechSynthesis" in window)) return;
 
@@ -113,7 +155,7 @@ async function sendMessage(message) {
     });
     const displayText = `[${response.provider} / ${response.model}]\n${response.answer}`;
     addMessage("assistant", displayText);
-    speak(response.answer);
+    await speakWithBestVoice(response.answer);
   } catch (error) {
     addMessage("error", error.message);
   } finally {
@@ -122,6 +164,63 @@ async function sendMessage(message) {
     messageInput.focus();
     refreshStatus().catch(() => {});
   }
+}
+
+function showTab(name) {
+  for (const [panelName, panel] of Object.entries(panels)) {
+    panel.classList.toggle("hidden", panelName !== name);
+  }
+  for (const button of tabButtons) {
+    button.classList.toggle("active", button.dataset.tab === name);
+  }
+}
+
+function setValue(id, value) {
+  const element = document.querySelector(`#${id}`);
+  if (!element) return;
+  if (element.type === "checkbox") element.checked = Boolean(value);
+  else element.value = value ?? "";
+}
+
+async function loadConfig() {
+  appConfig = await api("/api/config");
+  setValue("configPort", appConfig.port);
+  setValue("configOllamaUrl", appConfig.ollamaUrl);
+  setValue("configLocalModel", appConfig.localModel);
+  setValue("configOpenaiModel", appConfig.openaiModel);
+  setValue("configOpenaiReasoning", appConfig.openaiReasoning);
+  setValue("configProjectsRoot", appConfig.projectsRoot);
+  setValue("configAllowedDirs", (appConfig.allowedProjectDirs || []).join("\n"));
+  setValue("configTtsEnabled", appConfig.openaiTtsEnabled);
+  setValue("configTtsModel", appConfig.openaiTtsModel);
+  setValue("configTtsVoice", appConfig.openaiTtsVoice);
+}
+
+async function saveSettings(event) {
+  event.preventDefault();
+  const openaiApiKey = document.querySelector("#configOpenaiApiKey").value.trim();
+  const payload = {
+    port: document.querySelector("#configPort").value,
+    ollamaUrl: document.querySelector("#configOllamaUrl").value,
+    localModel: document.querySelector("#configLocalModel").value,
+    openaiModel: document.querySelector("#configOpenaiModel").value,
+    openaiReasoning: document.querySelector("#configOpenaiReasoning").value,
+    projectsRoot: document.querySelector("#configProjectsRoot").value,
+    allowedProjectDirs: document.querySelector("#configAllowedDirs").value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean),
+    openaiTtsEnabled: document.querySelector("#configTtsEnabled").checked,
+    openaiTtsModel: document.querySelector("#configTtsModel").value,
+    openaiTtsVoice: document.querySelector("#configTtsVoice").value
+  };
+
+  if (openaiApiKey) payload.openaiApiKey = openaiApiKey;
+
+  appConfig = await api("/api/config", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+  document.querySelector("#configOpenaiApiKey").value = "";
+  addMessage("assistant", "Configuracao salva. Se voce alterou a porta, reinicie o Jarvis para aplicar.");
+  refreshStatus().catch(() => {});
 }
 
 async function refreshStatus() {
@@ -138,6 +237,11 @@ async function refreshStatus() {
   statusEl.querySelector("span:last-child").textContent = status.ollama
     ? `local: ${status.model}`
     : "sem modelo ativo";
+}
+
+async function refreshDiagnostics() {
+  const diagnostics = await api("/api/diagnostics");
+  diagnosticsOutput.textContent = JSON.stringify(diagnostics, null, 2);
 }
 
 async function loadMemory() {
@@ -177,6 +281,82 @@ memoryForm.addEventListener("submit", async (event) => {
 
 refreshMemory.addEventListener("click", () => {
   loadMemory().catch((error) => addMessage("error", error.message));
+});
+
+settingsForm.addEventListener("submit", (event) => {
+  saveSettings(event).catch((error) => addMessage("error", error.message));
+});
+
+diagnosticsButton.addEventListener("click", () => {
+  refreshDiagnostics().catch((error) => {
+    diagnosticsOutput.textContent = error.message;
+  });
+});
+
+for (const button of tabButtons) {
+  button.addEventListener("click", () => {
+    showTab(button.dataset.tab);
+    if (button.dataset.tab === "settings") loadConfig().catch((error) => addMessage("error", error.message));
+    if (button.dataset.tab === "diagnostics") refreshDiagnostics().catch((error) => addMessage("error", error.message));
+  });
+}
+
+listFilesButton.addEventListener("click", async () => {
+  try {
+    const result = await api("/api/tools/list", {
+      method: "POST",
+      body: JSON.stringify({ path: document.querySelector("#toolPath").value })
+    });
+    toolOutput.textContent = JSON.stringify(result.files, null, 2);
+  } catch (error) {
+    toolOutput.textContent = error.message;
+  }
+});
+
+readFileButton.addEventListener("click", async () => {
+  try {
+    const result = await api("/api/tools/read", {
+      method: "POST",
+      body: JSON.stringify({ path: document.querySelector("#toolPath").value })
+    });
+    toolOutput.textContent = result.content;
+    document.querySelector("#toolContent").value = result.content;
+  } catch (error) {
+    toolOutput.textContent = error.message;
+  }
+});
+
+writeFileButton.addEventListener("click", async () => {
+  if (!confirm("Gravar este arquivo dentro de uma pasta permitida?")) return;
+  try {
+    const result = await api("/api/tools/write", {
+      method: "POST",
+      body: JSON.stringify({
+        path: document.querySelector("#toolPath").value,
+        content: document.querySelector("#toolContent").value
+      })
+    });
+    toolOutput.textContent = JSON.stringify(result, null, 2);
+  } catch (error) {
+    toolOutput.textContent = error.message;
+  }
+});
+
+runCommandButton.addEventListener("click", async () => {
+  if (!confirm("Rodar este comando dentro da pasta permitida?")) return;
+  try {
+    const result = await api("/api/tools/run", {
+      method: "POST",
+      body: JSON.stringify({
+        cwd: document.querySelector("#toolPath").value,
+        command: document.querySelector("#toolCommand").value,
+        args: document.querySelector("#toolArgs").value.split(" ").filter(Boolean)
+      })
+    });
+    toolOutput.textContent = JSON.stringify(result, null, 2);
+  } catch (error) {
+    toolOutput.textContent = error.message;
+  }
 });
 
 if (SpeechRecognition) {
@@ -236,6 +416,8 @@ if ("serviceWorker" in navigator) {
 }
 
 addMessage("assistant", welcome);
+showTab("chat");
+loadConfig().catch((error) => addMessage("error", error.message));
 refreshStatus().catch(() => {
   statusEl.classList.add("offline");
   statusEl.querySelector("span:last-child").textContent = "status indisponivel";

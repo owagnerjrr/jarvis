@@ -12,7 +12,11 @@
     "desktop": "electron .",
     "dist": "electron-builder --win dir",
     "dist:installer": "electron-builder --win nsis portable",
-    "check": "node --check server.js && node --check public/app.js && node --check desktop/main.js"
+    "android:add": "cap add android",
+    "android:sync": "cap sync android && node scripts/prepare-android.mjs",
+    "android:build": "cd android && gradlew assembleDebug",
+    "test": "node --test",
+    "check": "node --check server.js && node --check public/app.js && node --check desktop/main.js && node --test"
   },
   "build": {
     "appId": "br.com.owagnerjrr.jarvis",
@@ -45,7 +49,12 @@
     "node": ">=20"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.3.4",
     "electron": "^42.2.0",
     "electron-builder": "^26.8.1"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/core": "^8.3.4"
   }
 }

@@ -58,7 +58,48 @@
         </aside>
 
         <section class="chat-panel" aria-label="Conversa com Jarvis">
+          <div class="tabs" aria-label="Areas do Jarvis">
+            <button class="tab-button active" type="button" data-tab="chat">Chat</button>
+            <button class="tab-button" type="button" data-tab="settings">Config</button>
+            <button class="tab-button" type="button" data-tab="tools">Projetos</button>
+            <button class="tab-button" type="button" data-tab="diagnostics">Diagnostico</button>
+          </div>
           <div id="messages" class="messages"></div>
+          <section class="settings-panel hidden" id="settingsPanel" aria-label="Configuracao do Jarvis">
+            <form id="settingsForm" class="settings-grid">
+              <label><span>Porta</span><input id="configPort" inputmode="numeric"></label>
+              <label><span>Ollama URL</span><input id="configOllamaUrl"></label>
+              <label><span>Modelo local</span><input id="configLocalModel"></label>
+              <label><span>OpenAI API Key</span><input id="configOpenaiApiKey" type="password" placeholder="deixe vazio para manter"></label>
+              <label><span>Modelo OpenAI</span><input id="configOpenaiModel"></label>
+              <label><span>Raciocinio</span><input id="configOpenaiReasoning"></label>
+              <label><span>Pasta de projetos</span><input id="configProjectsRoot" placeholder="C:\Users\voce\Projetos"></label>
+              <label><span>Pastas extras permitidas</span><textarea id="configAllowedDirs" rows="3" placeholder="Uma pasta por linha"></textarea></label>
+              <label class="check-row"><input id="configTtsEnabled" type="checkbox"><span>Usar voz neural OpenAI</span></label>
+              <label><span>Modelo TTS</span><input id="configTtsModel"></label>
+              <label><span>Voz TTS</span><input id="configTtsVoice"></label>
+              <button type="submit">Salvar configuracao</button>
+            </form>
+          </section>
+          <section class="tools-panel hidden" id="toolsPanel" aria-label="Ferramentas de programacao">
+            <div class="tool-grid">
+              <label><span>Caminho</span><input id="toolPath" placeholder="Pasta ou arquivo dentro dos projetos permitidos"></label>
+              <div class="tool-actions">
+                <button class="secondary-button" id="listFilesButton" type="button">Listar</button>
+                <button class="secondary-button" id="readFileButton" type="button">Ler</button>
+              </div>
+              <label><span>Conteudo para gravar</span><textarea id="toolContent" rows="6"></textarea></label>
+              <button class="secondary-button" id="writeFileButton" type="button">Gravar arquivo</button>
+              <label><span>Comando</span><input id="toolCommand" placeholder="npm, git ou node"></label>
+              <label><span>Argumentos</span><input id="toolArgs" placeholder="run test"></label>
+              <button class="secondary-button" id="runCommandButton" type="button">Rodar comando</button>
+            </div>
+            <pre id="toolOutput" class="output-panel"></pre>
+          </section>
+          <section class="diagnostics-panel hidden" id="diagnosticsPanel" aria-label="Diagnostico">
+            <button class="secondary-button" id="diagnosticsButton" type="button">Atualizar diagnostico</button>
+            <pre id="diagnosticsOutput" class="output-panel"></pre>
+          </section>
           <form id="chatForm" class="composer">
             <textarea id="messageInput" rows="2" placeholder="Fale com o Jarvis..." autofocus></textarea>
             <button id="sendButton" type="submit">Enviar</button>

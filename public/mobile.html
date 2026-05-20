@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101418">
+    <title>Jarvis Mobile</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="mobile-connect">
+      <p class="eyebrow">Jarvis mobile</p>
+      <h1>Conectar ao PC</h1>
+      <form id="connectForm" class="connect-form">
+        <label>
+          <span>Endereco do Jarvis no computador</span>
+          <input id="serverUrl" placeholder="http://192.168.0.25:5185" autocomplete="url">
+        </label>
+        <button type="submit">Conectar</button>
+      </form>
+    </main>
+    <script type="module">
+      const form = document.querySelector("#connectForm");
+      const input = document.querySelector("#serverUrl");
+      input.value = localStorage.getItem("jarvisServerUrl") || "";
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const url = input.value.trim().replace(/\/$/, "");
+        if (!url) return;
+        localStorage.setItem("jarvisServerUrl", url);
+        location.href = url;
+      });
+    </script>
+  </body>
+</html>
